@@ -8,10 +8,16 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use src\Integration\DataProvider;
 
-class DecoratorManager extends DataProvider
+/*
+ * Если нет острой необходимости в наследовании, я бы предпочёл делегирование,
+ * хотя бы банально для удобства тестирования
+ */
+class DecoratorManager extends DataProvider //Ни о чем не говорящее название
 {
-    public $cache;
+    public $cache; // Нарушение инкапсуляции
     public $logger;
+
+    //Бессмысленный PHPDoc
 
     /**
      * @param string $host
@@ -25,16 +31,23 @@ class DecoratorManager extends DataProvider
         $this->cache = $cache;
     }
 
+    //Где то есть PHPDoc, где-то нет. Я не фанат бессмысленных комментариев, но Code Style должен быть един
+    //Мне кажется, что при использовании IOC такой метод будет мешать и нужно инициализировать через конструктор, но зависит от проекта
     public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritdoc} - это вообще законно?:) У кого он будет наследовать?
+     * Если будет исправлена ошибка с названием метода, то возникнет проблема не совпадения имен параметров
      */
-    public function getResponse(array $input)
+    //Я C#-ер, и меня пугает передача массивов не известной природы по значению в качестве параметров
+    //Кажется, что это может быть реализовано через Deep Copy и создавать ощутимый оверхэд,
+    //но может это в PHP как-то решается?
+    public function getResponse(array $input) // кажется этот метод должен был переопределять метод get родителя, но название отличается
     {
+
         try {
             $cacheKey = $this->getCacheKey($input);
             $cacheItem = $this->cache->getItem($cacheKey);
@@ -49,17 +62,27 @@ class DecoratorManager extends DataProvider
                 ->expiresAt(
                     (new DateTime())->modify('+1 day')
                 );
-
+            // Нет вызова save
             return $result;
         } catch (Exception $e) {
-            $this->logger->critical('Error');
+            //Судя по всему, логгер может быть не инициализирован, и здесь будет ошибка
+            $this->logger->critical('Error'); //Сообщение бессмыслено, информация об ошибки потеряна
+
         }
 
-        return [];
+        return [];//А правда ли в случае ошибки обращения к внешнему сервису, нам не нужно ее пробрасывать выше?
     }
 
-    public function getCacheKey(array $input)
+    public function getCacheKey(array $input) //Ей тоже не нужно быть публичной
     {
+        /*
+         * PSR-6 говорит нам:
+         *  Implementing libraries MUST support keys consisting of the
+         *  characters A-Z, a-z, 0-9, _, and . in any order in UTF-8 encoding and a
+         *  length of up to 64 characters.
+         *
+         * Такая реализация может сформировать ключ, который не будет поддержаиваться реализацией CacheItemPoolInterface
+         */
         return json_encode($input);
     }
 }
