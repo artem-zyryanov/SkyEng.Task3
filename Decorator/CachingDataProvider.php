@@ -8,6 +8,10 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use src\Integration\DataProvider;
 
+/*
+ * В Шарпе я бы наверное сделал общий интерфейс DataProvider,
+ * если бы предполагалось, что они будут взаимозаменяемы
+ */
 class CachingDataProvider
 {
     private $cache;
@@ -30,6 +34,8 @@ class CachingDataProvider
     }
 
     /**
+     * Кеширует резултат вызова DataProvider на сутки
+     *
      * {@inheritdoc}
      */
     public function get(array $request)
