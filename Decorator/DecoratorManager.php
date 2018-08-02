@@ -68,7 +68,7 @@ class DecoratorManager extends DataProvider //Ни о чем не говорящ
             $cacheItem
                 ->set($result)
                 ->expiresAt(
-                    (new DateTime())->modify('+1 day')
+                    (new DateTime())->modify('+1 day') //Может время кеширования стоило параметризовать?
                 );
             // Нет вызова save. А есть ли на этот код тесты?
             return $result;
